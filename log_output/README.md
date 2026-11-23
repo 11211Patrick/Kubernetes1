@@ -18,6 +18,6 @@ docker push patrick11211/log-output:1.1
 ## Deploy to Kubernetes
 
 ```bash
-kubectl create deployment log-output-dep --image=patrick11211/log-output:1.1
+kubectl apply -f manifests/deployment.yaml
 kubectl logs -f deployment/log-output-dep
 ```
