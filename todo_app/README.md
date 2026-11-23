@@ -19,7 +19,6 @@ docker push patrick11211/todo-app:1.2
 ## Deploy to Kubernetes
 
 ```bash
-kubectl create deployment todo-app-dep --image=patrick11211/todo-app:1.2
-kubectl set env deployment/todo-app-dep PORT=8080   # optional: change the port
-kubectl logs deployment/todo-app-dep
+kubectl apply -f manifests/deployment.yaml
+kubectl logs -f deployment/log-output-dep
 ```
