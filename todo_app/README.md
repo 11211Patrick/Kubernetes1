@@ -22,3 +22,11 @@ docker push patrick11211/todo-app:1.2
 kubectl apply -f manifests/deployment.yaml
 kubectl logs -f deployment/log-output-dep
 ```
+
+## Access
+
+```bash
+kubectl port-forward deployment/todo-app-dep 8080:8080
+```
+
+Then open http://localhost:8080 in a browser.
