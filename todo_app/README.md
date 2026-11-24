@@ -12,8 +12,8 @@ PORT=8080 python main.py
 ## Build and push the image
 
 ```bash
-docker build -t patrick11211/todo-app:1.2 .
-docker push patrick11211/todo-app:1.2
+docker build -t patrick11211/todo-app:1.5 .
+docker push patrick11211/todo-app:1.5
 ```
 
 ## Deploy to Kubernetes
