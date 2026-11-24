@@ -11,8 +11,8 @@ python main.py
 ## Build and push the image
 
 ```bash
-docker build -t patrick11211/log-output:1.1 .
-docker push patrick11211/log-output:1.1
+docker build -t patrick11211/log-output:1.7 .
+docker push patrick11211/log-output:1.7
 ```
 
 ## Deploy to Kubernetes
