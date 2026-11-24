@@ -16,17 +16,21 @@ docker build -t patrick11211/todo-app:1.5 .
 docker push patrick11211/todo-app:1.5
 ```
 
+## Create the cluster
+
+The cluster must map host port 8082 to NodePort 30080:
+
+```bash
+k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
+```
+
 ## Deploy to Kubernetes
 
 ```bash
-kubectl apply -f manifests/deployment.yaml
-kubectl logs -f deployment/log-output-dep
+kubectl apply -f manifests/
+kubectl logs deployment/todo-app-dep
 ```
 
 ## Access
 
-```bash
-kubectl port-forward deployment/todo-app-dep 8080:8080
-```
-
-Then open http://localhost:8080 in a browser.
+Open http://localhost:8082 in a browser.
