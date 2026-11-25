@@ -12,6 +12,17 @@ spec:
       labels:
         app: log-output
     spec:
+      volumes:
+        - name: shared-string
+          emptyDir: {}
       containers:
-        - name: log-output
-          image: patrick11211/log-output:1.7
+        - name: generate-string
+          image: patrick11211/generate-string:1.10
+          volumeMounts: # Mount volume
+          - name: shared-string
+            mountPath: /usr/src/app/files
+        - name: read-string
+          image: patrick11211/read-string:1.10
+          volumeMounts: # Mount volume
+          - name: shared-string
+            mountPath: /usr/src/app/files
