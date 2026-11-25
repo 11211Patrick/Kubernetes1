@@ -13,16 +13,21 @@ spec:
         app: log-output
     spec:
       volumes:
-        - name: shared-string
+        - name: pingpong-data
+          persistentVolumeClaim:
+            claimName: string-claim
+        - name: log-files
           emptyDir: {}
       containers:
         - name: generate-string
           image: patrick11211/generate-string:1.10
           volumeMounts: # Mount volume
-          - name: shared-string
+          - name: log-files
             mountPath: /usr/src/app/files
         - name: read-string
-          image: patrick11211/read-string:1.10
+          image: patrick11211/read-string:1.11
           volumeMounts: # Mount volume
-          - name: shared-string
+          - name: log-files
             mountPath: /usr/src/app/files
+          - name: pingpong-data
+            mountPath: /usr/src/app/shared

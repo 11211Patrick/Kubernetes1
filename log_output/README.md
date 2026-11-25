@@ -31,9 +31,9 @@ curl localhost:3000/status
 
 ```bash
 docker build -t patrick11211/generate-string:1.10 generate_string
-docker build -t patrick11211/read-string:1.10 read_string
+docker build -t patrick11211/read-string:1.11 read_string
 docker push patrick11211/generate-string:1.10
-docker push patrick11211/read-string:1.10
+docker push patrick11211/read-string:1.11
 ```
 
 ## Deploy to Kubernetes
