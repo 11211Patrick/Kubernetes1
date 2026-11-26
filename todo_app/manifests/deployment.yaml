@@ -18,7 +18,7 @@ spec:
             claimName: app-claim
       containers:
         - name: todo-app
-          image: patrick11211/todo-app:1.12
+          image: patrick11211/todo-app:1.13
           volumeMounts:
           - name: shared-app
             mountPath: /usr/src/app/files

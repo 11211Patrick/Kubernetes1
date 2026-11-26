@@ -1,10 +1,10 @@
 # Todo app
 
-A simple web server that serves an HTML page at `/` with a random image from [Lorem Picsum](https://picsum.photos).
+A simple web server that serves an HTML page at `/` with:
 
-The image is cached in a persistent volume and kept for 10 minutes.
-After it expires, the old image is served once more while a new one is downloaded in the background, and the next request gets the new image.
-Because the image is stored on a persistent volume, it survives container crashes and pod restarts without calling the API again.
+- a random image from [Lorem Picsum](https://picsum.photos), cached in a persistent volume
+- an input field for a new todo (max 140 characters) and a send button (not functional yet)
+- a list of hardcoded todos
 
 ## Endpoints
 
@@ -30,8 +30,8 @@ Then open http://localhost:8080 in a browser.
 ## Build and push the image
 
 ```bash
-docker build -t patrick11211/todo-app:1.12 .
-docker push patrick11211/todo-app:1.12
+docker build -t patrick11211/todo-app:1.13 .
+docker push patrick11211/todo-app:1.13
 ```
 
 ## Create the cluster
