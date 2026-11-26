@@ -12,9 +12,16 @@ spec:
       labels:
         app: todo-app
     spec:
+      volumes:
+        - name: shared-app
+          persistentVolumeClaim:
+            claimName: app-claim
       containers:
         - name: todo-app
-          image: patrick11211/todo-app:1.5
+          image: patrick11211/todo-app:1.12
+          volumeMounts:
+          - name: shared-app
+            mountPath: /usr/src/app/files
           env:
             - name: PORT
               value: "8080"
