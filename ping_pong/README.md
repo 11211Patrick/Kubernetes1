@@ -1,56 +1,47 @@
 # Ping-pong
 
-Responds with `pong N` to GET requests on `/pingpong`, where N is the number of requests received so far, starting from 0.
+A simple HTTP server with a request counter kept in memory.
+The counter resets when the process restarts.
 
-The counter is saved to a file on a persistent volume after every request, and loaded from that file on startup.
-This means the count survives pod restarts, and the Log output application can read it from the same volume.
+## Endpoints
 
-Environment variables:
+- `/pingpong`: responds with `pong N` and increases the counter. Exposed to browsers through the Ingress.
+- `/pings`: responds with the current counter value without increasing it. Used by the Log output application inside the cluster; not exposed through the Ingress.
 
-- `PORT`: HTTP port (default: 3000).
-- `COUNT_FILE`: path of the counter file (default: `/usr/src/app/files/pingpong.txt`).
+## Environment variables
+
+- `PORT`: HTTP port (default: 3000)
 
 ## Run locally
 
 ```bash
-COUNT_FILE=/tmp/pingpong.txt python main.py
+python main.py
 ```
 
 In another terminal:
 
 ```bash
 curl localhost:3000/pingpong
+curl localhost:3000/pings
 ```
 
 ## Build and push the image
 
 ```bash
-docker build -t patrick11211/ping-pong:1.11 .
-docker push patrick11211/ping-pong:1.11
+docker build -t patrick11211/ping-pong:2.1 .
+docker push patrick11211/ping-pong:2.1
 ```
 
 ## Deploy to Kubernetes
 
-The persistent volume and claim must be created first (see `../persistent_volume/README.md`).
-The deployment mounts the claim `string-claim` at `/usr/src/app/files`.
+The Service `ping-pong-svc` exposes the application inside the cluster on port 2346.
+The Ingress is shared with the Log output application and defined in `../log_output/manifests/ingress.yaml`.
 
 ```bash
-kubectl apply -f ../persistent_volume/
 kubectl apply -f manifests/
 kubectl apply -f ../log_output/manifests/
 ```
 
-The Ingress is shared with the Log output application and defined in `../log_output/manifests/ingress.yaml`.
-
 ## Access
 
 Open http://localhost:8081/pingpong in a browser. The number increases on every request.
-
-## Verify that the count persists
-
-```bash
-kubectl delete pod -l app=ping-pong
-curl localhost:8081/pingpong
-```
-
-After the new pod starts, the count continues from the previous value instead of resetting to 0.

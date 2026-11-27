@@ -13,9 +13,6 @@ spec:
         app: log-output
     spec:
       volumes:
-        - name: pingpong-data
-          persistentVolumeClaim:
-            claimName: string-claim
         - name: log-files
           emptyDir: {}
       containers:
@@ -25,9 +22,7 @@ spec:
           - name: log-files
             mountPath: /usr/src/app/files
         - name: read-string
-          image: patrick11211/read-string:1.11
+          image: patrick11211/read-string:2.1
           volumeMounts: # Mount volume
           - name: log-files
             mountPath: /usr/src/app/files
-          - name: pingpong-data
-            mountPath: /usr/src/app/shared

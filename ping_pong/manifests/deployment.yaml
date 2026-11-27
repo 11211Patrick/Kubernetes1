@@ -12,13 +12,6 @@ spec:
       labels:
         app: ping-pong
     spec:
-      volumes:
-        - name: shared-string
-          persistentVolumeClaim:
-            claimName: string-claim
       containers:
         - name: ping-pong
-          image: patrick11211/ping-pong:1.11
-          volumeMounts: # Mount volume
-          - name: shared-string
-            mountPath: /usr/src/app/files
+          image: patrick11211/ping-pong:2.1

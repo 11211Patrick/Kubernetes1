@@ -1,9 +1,10 @@
 import os
+import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 PORT = int(os.environ.get("PORT", "3000"))
 FILE_PATH = os.environ.get("FILE_PATH", "/usr/src/app/files/log.txt")
-COUNT_FILE = os.environ.get("COUNT_FILE", "/usr/src/app/shared/pingpong.txt")
+PINGPONG_URL = os.environ.get("PINGPONG_URL", "http://ping-pong-svc:2346/pings")
 
 
 def last_line():
@@ -17,10 +18,11 @@ def last_line():
 
 def ping_count():
     try:
-        with open(COUNT_FILE) as f:
-            return f.read().strip() or "0"
-    except FileNotFoundError:
-        return "0"
+        with urllib.request.urlopen(PINGPONG_URL, timeout=3) as resp:
+            return resp.read().decode("utf-8").strip()
+    except Exception as e:
+        print(f"Failed to get ping count: {e}", flush=True)
+        return "unavailable"
 
 
 class Handler(BaseHTTPRequestHandler):
