@@ -1,4 +1,5 @@
 import html
+import json
 import os
 import threading
 import time
@@ -10,12 +11,7 @@ IMAGE_DIR = os.environ.get("IMAGE_DIR", "/usr/src/app/files")
 IMAGE_PATH = os.path.join(IMAGE_DIR, "image.jpg")
 IMAGE_URL = os.environ.get("IMAGE_URL", "https://picsum.photos/1200")
 CACHE_SECONDS = int(os.environ.get("CACHE_SECONDS", "600"))
-
-TODOS = [
-    "Listen to Yorushika",
-    "Listen to Aimer",
-    "Listen to nishina",
-]
+TODO_BACKEND_URL = os.environ.get("TODO_BACKEND_URL", "http://todo-backend-svc:2345/todos")
 
 PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -31,29 +27,39 @@ PAGE = """<!DOCTYPE html>
     .form button {{ padding: 10px 20px; font-size: 16px; background: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; }}
     ul {{ list-style: none; padding: 0; }}
     li {{ padding: 14px; margin-bottom: 8px; background: #f7f7f7; border-left: 4px solid #5cb85c; }}
+    .error {{ color: #c0392b; text-align: center; }}
   </style>
 </head>
 <body>
   <h1>Todo app</h1>
   <img class="image" src="/image" alt="Random image">
 
-  <div class="form">
-    <input type="text" maxlength="140" placeholder="Enter a new todo (max 140 characters)">
-    <button type="button">Send</button>
-  </div>
+  <form class="form" action="/todos" method="POST">
+    <input type="text" name="todo" maxlength="140" required placeholder="Enter a new todo (max 140 characters)">
+    <button type="submit">Send</button>
+  </form>
 
   <h2>Todos</h2>
-  <ul>
-{items}
-  </ul>
+{todo_section}
 </body>
 </html>
 """
 
 
+def fetch_todos():
+    with urllib.request.urlopen(TODO_BACKEND_URL, timeout=3) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 def render_page():
-    items = "\n".join(f"    <li>{html.escape(todo)}</li>" for todo in TODOS)
-    return PAGE.format(items=items)
+    try:
+        todos = fetch_todos()
+        items = "\n".join(f"    <li>{html.escape(todo)}</li>" for todo in todos)
+        todo_section = f"  <ul>\n{items}\n  </ul>"
+    except Exception as e:
+        print(f"Failed to fetch todos: {e}", flush=True)
+        todo_section = '  <p class="error">Could not load todos.</p>'
+    return PAGE.format(todo_section=todo_section)
 
 
 download_lock = threading.Lock()
