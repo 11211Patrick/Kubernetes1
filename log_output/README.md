@@ -3,7 +3,7 @@
 The application runs as two containers in a single pod, sharing an `emptyDir` volume:
 
 - **generate-string**: generates a random string on startup and appends a line with a timestamp and the random string to a file every 5 seconds.
-- **read-string**: serves `/status`, which shows the latest line from that file and the number of ping-pongs.
+- **read-string**: serves `/status`, which shows the content of a configuration file, an environment variable, the latest line from the shared file and the number of ping-pongs.
 
 The number of ping-pongs is fetched over HTTP from the Ping-pong application's `/pings` endpoint, through the Service `ping-pong-svc`.
 Both applications run in the namespace `exercises`, so the short Service name works.
@@ -11,17 +11,35 @@ Both applications run in the namespace `exercises`, so the short Service name wo
 Example response:
 
 ```
-2026-11-28T07:40:00.123Z: 0ebf4bba-1b04-42e2-b5e6-d3fe7beb8254.
+file content: this text is from file
+env variable: MESSAGE=hello world
+2026-11-28T11:30:00.123Z: 0ebf4bba-1b04-42e2-b5e6-d3fe7beb8254.
 Ping / Pongs: 3
 ```
 
 If the Ping-pong application is not reachable, the count is shown as `unavailable`.
+
+## Configuration
+
+The ConfigMap `log-output-config` (`manifests/configmap.yaml`) provides two values to read-string:
+
+- `information.txt`: mounted as a file at `/usr/src/app/config/information.txt`
+- `MESSAGE`: set as an environment variable
+
+Changes to the file are picked up automatically after a short delay.
+Changes to the environment variable require restarting the pod:
+
+```bash
+kubectl rollout restart deployment/log-output-dep -n exercises
+```
 
 ## Environment variables
 
 - `FILE_PATH`: path of the shared file (default: `/usr/src/app/files/log.txt`), used by both containers
 - `PORT`: HTTP port of read-string (default: 3000)
 - `PINGPONG_URL`: URL of the ping count (default: `http://ping-pong-svc:2346/pings`)
+- `INFO_FILE`: path of the configuration file (default: `/usr/src/app/config/information.txt`)
+- `MESSAGE`: a message shown in the response, set from the ConfigMap
 
 ## Run locally
 
@@ -33,7 +51,9 @@ FILE_PATH=/tmp/log.txt python generate_string/main.py
 ```
 
 ```bash
-FILE_PATH=/tmp/log.txt PORT=3001 PINGPONG_URL=http://localhost:3000/pings python read_string/main.py
+echo "this text is from file" > /tmp/information.txt
+FILE_PATH=/tmp/log.txt INFO_FILE=/tmp/information.txt MESSAGE="hello world" PORT=3001 \
+  PINGPONG_URL=http://localhost:3000/pings python read_string/main.py
 ```
 
 ```bash
@@ -44,9 +64,9 @@ curl localhost:3001/status
 
 ```bash
 docker build -t patrick11211/generate-string:1.10 generate_string
-docker build -t patrick11211/read-string:2.1 read_string
+docker build -t patrick11211/read-string:2.5 read_string
 docker push patrick11211/generate-string:1.10
-docker push patrick11211/read-string:2.1
+docker push patrick11211/read-string:2.5
 ```
 
 ## Create the cluster

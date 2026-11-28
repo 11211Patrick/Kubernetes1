@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: exercises
   name: log-output-dep
+  namespace: exercises
 spec:
   replicas: 1
   selector:
@@ -16,14 +16,28 @@ spec:
       volumes:
         - name: log-files
           emptyDir: {}
+        - name: config
+          configMap:
+            name: log-output-config
+            items:
+              - key: information.txt
+                path: information.txt
       containers:
         - name: generate-string
           image: patrick11211/generate-string:1.10
-          volumeMounts: # Mount volume
+          volumeMounts:
           - name: log-files
             mountPath: /usr/src/app/files
         - name: read-string
-          image: patrick11211/read-string:2.1
-          volumeMounts: # Mount volume
+          image: patrick11211/read-string:2.5
+          env:
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-config
+                  key: MESSAGE
+          volumeMounts:
           - name: log-files
             mountPath: /usr/src/app/files
+          - name: config
+            mountPath: /usr/src/app/config
