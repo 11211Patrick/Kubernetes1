@@ -6,11 +6,12 @@ The application runs as two containers in a single pod, sharing an `emptyDir` vo
 - **read-string**: serves `/status`, which shows the latest line from that file and the number of ping-pongs.
 
 The number of ping-pongs is fetched over HTTP from the Ping-pong application's `/pings` endpoint, through the Service `ping-pong-svc`.
+Both applications run in the namespace `exercises`, so the short Service name works.
 
 Example response:
 
 ```
-2026-11-27T08:40:00.123Z: 0ebf4bba-1b04-42e2-b5e6-d3fe7beb8254.
+2026-11-28T07:40:00.123Z: 0ebf4bba-1b04-42e2-b5e6-d3fe7beb8254.
 Ping / Pongs: 3
 ```
 
@@ -58,17 +59,19 @@ k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
 
 ## Deploy to Kubernetes
 
-The Ping-pong application must also be deployed (see `../ping_pong/README.md`).
+The namespace must be created first (see `../namespaces/README.md`), and the Ping-pong application must also be deployed (see `../ping_pong/README.md`).
 
 ```bash
+kubectl apply -f ../namespaces/
 kubectl apply -f manifests/
 ```
 
-View the logs of each container:
+Check the status and the logs of each container:
 
 ```bash
-kubectl logs deployment/log-output-dep -c generate-string
-kubectl logs deployment/log-output-dep -c read-string
+kubectl get pods -n exercises
+kubectl logs deployment/log-output-dep -c generate-string -n exercises
+kubectl logs deployment/log-output-dep -c read-string -n exercises
 ```
 
 ## Access
