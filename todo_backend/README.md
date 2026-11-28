@@ -3,6 +3,8 @@
 A service that stores todo items in memory.
 The todos are lost when the process restarts; a database will be added later.
 
+The service runs in the namespace `project`.
+
 ## Endpoints
 
 - `GET /todos`: returns the list of todos as JSON, for example `["Learn Kubernetes"]`.
@@ -35,11 +37,20 @@ docker push patrick11211/todo-backend:2.2
 
 ## Deploy to Kubernetes
 
-The Service `todo-backend-svc` exposes the service inside the cluster on port 2345.
+The namespace must be created first (see `../namespaces/README.md`).
+The Service `todo-backend-svc` exposes the service inside the namespace on port 2345.
 The path `/todos` is routed to this service by the Ingress defined in `../todo_app/manifests/ingress.yaml`.
 
 ```bash
+kubectl apply -f ../namespaces/
 kubectl apply -f manifests/
+```
+
+Check the status and logs:
+
+```bash
+kubectl get pods -n project
+kubectl logs deployment/todo-backend-dep -n project
 ```
 
 ## Access

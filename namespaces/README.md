@@ -3,7 +3,7 @@
 | Namespace | Contents |
 |---|---|
 | `exercises` | Applications of the exercises: Log output and Ping-pong |
-| `default` | The project (todo-app and todo-backend), until it gets its own namespace |
+| `project` | The project: todo-app and todo-backend, and the claim `app-claim` |
 
 ## Create
 

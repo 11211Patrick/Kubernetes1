@@ -6,10 +6,12 @@ A web server that renders the todo app page at `/` (server-side rendering). The 
 - a form for creating a new todo (max 140 characters), which is submitted to the todo-backend
 - the list of todos, fetched from the todo-backend inside the cluster
 
+The application runs in the namespace `project`.
+
 ## How it works
 
 1. The browser submits the form with `POST /todos`. The Ingress routes it to the todo-backend, which saves the todo and redirects the browser back to `/`.
-2. When rendering `/`, the todo-app fetches the todos from `http://todo-backend-svc:2345/todos` inside the cluster and renders them into the HTML.
+2. When rendering `/`, the todo-app fetches the todos from `http://todo-backend-svc:2345/todos` inside the namespace and renders them into the HTML.
 
 The image is kept for 10 minutes. After it expires, the old image is served once more while a new one is downloaded in the background, and the next request gets the new image.
 Because the image is stored on a persistent volume, it survives container crashes and pod restarts without calling the API again.
@@ -56,20 +58,23 @@ k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
 
 ## Deploy to Kubernetes
 
-The persistent volume and claim (`app-claim`) must be created first (see `../persistent_volume/README.md`), and the todo-backend must be deployed.
+The namespace, the persistent volume and claim (`app-claim`) must be created first, and the todo-backend must be deployed:
 
 ```bash
+kubectl apply -f ../namespaces/
 kubectl apply -f ../persistent_volume/
 kubectl apply -f ../todo_backend/manifests/
 kubectl apply -f manifests/
 ```
 
-If the pod stays `Pending` and `kubectl get pv` shows `app-pv` as `Released`, delete and recreate the volume:
+Check the status and logs:
 
 ```bash
-kubectl delete pv app-pv
-kubectl apply -f ../persistent_volume/
+kubectl get pods -n project
+kubectl logs deployment/todo-app-dep -n project
 ```
+
+If the pod stays `Pending` and `kubectl get pv` shows `app-pv` as `Released`, see `../persistent_volume/README.md`.
 
 ## Access
 
@@ -79,7 +84,7 @@ Open http://localhost:8081 in a browser, write a todo and press Send.
 
 ```bash
 curl localhost:8081/shutdown
-kubectl delete pod -l app=todo-app
+kubectl delete pod -l app=todo-app -n project
 ```
 
 In both cases the same image is shown after the application is back.
