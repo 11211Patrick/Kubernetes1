@@ -1,17 +1,28 @@
 import html
 import json
 import os
+import sys
 import threading
 import time
 import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-PORT = int(os.environ.get("PORT", "3000"))
-IMAGE_DIR = os.environ.get("IMAGE_DIR", "/usr/src/app/files")
+
+def require_env(name):
+    value = os.environ.get(name)
+    if not value:
+        sys.exit(f"Missing required environment variable: {name}")
+    return value
+
+
+PORT = int(require_env("PORT"))
+TODO_BACKEND_URL = require_env("TODO_BACKEND_URL")
+TODO_POST_URL = require_env("TODO_POST_URL")
+TODO_MAX_LENGTH = int(require_env("TODO_MAX_LENGTH"))
+IMAGE_DIR = require_env("IMAGE_DIR")
+IMAGE_URL = require_env("IMAGE_URL")
+CACHE_SECONDS = int(require_env("CACHE_SECONDS"))
 IMAGE_PATH = os.path.join(IMAGE_DIR, "image.jpg")
-IMAGE_URL = os.environ.get("IMAGE_URL", "https://picsum.photos/1200")
-CACHE_SECONDS = int(os.environ.get("CACHE_SECONDS", "600"))
-TODO_BACKEND_URL = os.environ.get("TODO_BACKEND_URL", "http://todo-backend-svc:2345/todos")
 
 PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -34,8 +45,8 @@ PAGE = """<!DOCTYPE html>
   <h1>Todo app</h1>
   <img class="image" src="/image" alt="Random image">
 
-  <form class="form" action="/todos" method="POST">
-    <input type="text" name="todo" maxlength="140" required placeholder="Enter a new todo (max 140 characters)">
+  <form class="form" action="{post_url}" method="POST">
+    <input type="text" name="todo" maxlength="{max_length}" required placeholder="Enter a new todo (max {max_length} characters)">
     <button type="submit">Send</button>
   </form>
 
@@ -59,7 +70,11 @@ def render_page():
     except Exception as e:
         print(f"Failed to fetch todos: {e}", flush=True)
         todo_section = '  <p class="error">Could not load todos.</p>'
-    return PAGE.format(todo_section=todo_section)
+    return PAGE.format(
+        post_url=html.escape(TODO_POST_URL),
+        max_length=TODO_MAX_LENGTH,
+        todo_section=todo_section,
+    )
 
 
 download_lock = threading.Lock()

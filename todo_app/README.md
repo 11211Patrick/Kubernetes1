@@ -3,7 +3,7 @@
 A web server that renders the todo app page at `/` (server-side rendering). The page contains:
 
 - a random image from [Lorem Picsum](https://picsum.photos), cached in a persistent volume
-- a form for creating a new todo (max 140 characters), which is submitted to the todo-backend
+- a form for creating a new todo, which is submitted to the todo-backend
 - the list of todos, fetched from the todo-backend inside the cluster
 
 The application runs in the namespace `project`.
@@ -11,9 +11,9 @@ The application runs in the namespace `project`.
 ## How it works
 
 1. The browser submits the form with `POST /todos`. The Ingress routes it to the todo-backend, which saves the todo and redirects the browser back to `/`.
-2. When rendering `/`, the todo-app fetches the todos from `http://todo-backend-svc:2345/todos` inside the namespace and renders them into the HTML.
+2. When rendering `/`, the todo-app fetches the todos from the todo-backend inside the namespace and renders them into the HTML.
 
-The image is kept for 10 minutes. After it expires, the old image is served once more while a new one is downloaded in the background, and the next request gets the new image.
+The image is kept for `CACHE_SECONDS` seconds. After it expires, the old image is served once more while a new one is downloaded in the background, and the next request gets the new image.
 Because the image is stored on a persistent volume, it survives container crashes and pod restarts without calling the API again.
 
 ## Endpoints
@@ -22,30 +22,48 @@ Because the image is stored on a persistent volume, it survives container crashe
 - `/image`: the cached image
 - `/shutdown`: stops the process, **for testing only**. The container is restarted automatically by Kubernetes.
 
-## Environment variables
+## Configuration
 
-- `PORT`: HTTP port (default: 3000)
-- `TODO_BACKEND_URL`: URL of the todo list (default: `http://todo-backend-svc:2345/todos`)
-- `IMAGE_DIR`: directory where the image is stored (default: `/usr/src/app/files`)
-- `CACHE_SECONDS`: how long an image is kept, in seconds (default: 600)
-- `IMAGE_URL`: image source (default: `https://picsum.photos/1200`)
+All configuration is passed as environment variables. There are no default values in the source code;
+the application exits with an error message if a variable is missing.
+
+| Variable | Description | Value in the cluster |
+|---|---|---|
+| `PORT` | HTTP port | `8080` |
+| `TODO_BACKEND_URL` | URL for fetching the todos inside the cluster | `http://todo-backend-svc:2345/todos` |
+| `TODO_POST_URL` | URL the browser submits the form to (routed by the Ingress) | `/todos` |
+| `TODO_MAX_LENGTH` | Maximum length of a todo in the form | `140` |
+| `IMAGE_DIR` | Directory where the image is stored | `/usr/src/app/files` |
+| `IMAGE_URL` | Image source | `https://picsum.photos/1200` |
+| `CACHE_SECONDS` | How long an image is kept, in seconds | `600` |
+
+In the cluster, the values are defined in the ConfigMap `todo-app-config` (`manifests/configmap.yaml`)
+and passed to the container with `envFrom`.
+`PORT` must match the `targetPort` of the Service, and `TODO_MAX_LENGTH` should be the same as in the todo-backend.
 
 ## Run locally
 
 Start the todo-backend first (see `../todo_backend/README.md`), then:
 
 ```bash
-PORT=8080 IMAGE_DIR=/tmp/todo-images TODO_BACKEND_URL=http://localhost:3000/todos python main.py
+PORT=8080 \
+TODO_BACKEND_URL=http://localhost:3000/todos \
+TODO_POST_URL=/todos \
+TODO_MAX_LENGTH=140 \
+IMAGE_DIR=/tmp/todo-images \
+IMAGE_URL=https://picsum.photos/1200 \
+CACHE_SECONDS=600 \
+python main.py
 ```
 
 Open http://localhost:8080 in a browser.
-Note that the form posts to `/todos` on the same address, so submitting it only works when running in the cluster behind the Ingress.
+To submit the form locally without the Ingress, set `TODO_POST_URL=http://localhost:3000/todos` and `REDIRECT_URL=http://localhost:8080/` for the todo-backend.
 
 ## Build and push the image
 
 ```bash
-docker build -t patrick11211/todo-app:2.2 .
-docker push patrick11211/todo-app:2.2
+docker build -t patrick11211/todo-app:2.6 .
+docker push patrick11211/todo-app:2.6
 ```
 
 ## Create the cluster
@@ -67,11 +85,18 @@ kubectl apply -f ../todo_backend/manifests/
 kubectl apply -f manifests/
 ```
 
-Check the status and logs:
+Check the status, logs and configuration:
 
 ```bash
 kubectl get pods -n project
 kubectl logs deployment/todo-app-dep -n project
+kubectl exec deployment/todo-app-dep -n project -- printenv
+```
+
+After changing the ConfigMap, restart the pod to apply the new values:
+
+```bash
+kubectl rollout restart deployment/todo-app-dep -n project
 ```
 
 If the pod stays `Pending` and `kubectl get pv` shows `app-pv` as `Released`, see `../persistent_volume/README.md`.

@@ -1,10 +1,20 @@
 import json
 import os
+import sys
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-PORT = int(os.environ.get("PORT", "3000"))
-MAX_LENGTH = 140
+
+def require_env(name):
+    value = os.environ.get(name)
+    if not value:
+        sys.exit(f"Missing required environment variable: {name}")
+    return value
+
+
+PORT = int(require_env("PORT"))
+MAX_LENGTH = int(require_env("TODO_MAX_LENGTH"))
+REDIRECT_URL = require_env("REDIRECT_URL")
 
 todos = []
 
@@ -43,7 +53,7 @@ class Handler(BaseHTTPRequestHandler):
 
         todos.append(todo)
         print(f"Created todo: {todo}", flush=True)
-        self.send(303, "text/plain; charset=utf-8", b"Created\n", {"Location": "/"})
+        self.send(303, "text/plain; charset=utf-8", b"Created\n", {"Location": REDIRECT_URL})
 
 
 server = HTTPServer(("0.0.0.0", PORT), Handler)
